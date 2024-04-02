@@ -7,30 +7,48 @@
     tools:context=".MainActivity">
 
     <Button
-        android:id="@+id/authButton"
+        android:id="@+id/tokenButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="auth"
+        android:text="get token"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/authButton"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"/>
     <ProgressBar
         android:id="@+id/progressBar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/authButton"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tokenButton"
+        app:layout_constraintStart_toStartOf="@id/tokenButton"
+        app:layout_constraintEnd_toEndOf="@id/authButton"
         android:visibility="gone"/>
 
     <TextView
-        android:id="@+id/textView"
+        android:id="@+id/tokenText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toTopOf="@id/tokenButton"
+        app:layout_constraintStart_toStartOf="@id/tokenButton"
+        app:layout_constraintEnd_toEndOf="@id/tokenButton"
+        android:text="output_token"/>
+
+    <Button
+        android:id="@+id/authButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toEndOf="@id/tokenButton"
+        app:layout_constraintTop_toTopOf="@id/tokenButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:text="authenticate"/>
+
+    <TextView
+        android:id="@+id/authText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toTopOf="@id/authButton"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:text="output"/>
+        app:layout_constraintStart_toStartOf="@id/authButton"
+        app:layout_constraintEnd_toEndOf="@id/authButton"
+        android:text="auth_text"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

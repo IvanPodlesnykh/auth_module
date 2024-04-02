@@ -10,12 +10,12 @@ import retrofit2.http.Part
 interface AuthApi {
 
     @GET("token_path/")
-    fun getCookies(): Call<CookiesResponse>
+    fun getCookies(): Call<MyResponse>
 
     @Multipart
-    @POST("path/")
+    @POST("auth_path/")
     fun authenticate(@Part("email") login: String,
                      @Part("password") password: String,
                      @Header("Cookie") cookie: String,
-                     @Header("X-Xsrf-Token") token: String): Call<CookiesResponse>
+                     @Header("X-Xsrf-Token") token: String): Call<MyResponse>
 }

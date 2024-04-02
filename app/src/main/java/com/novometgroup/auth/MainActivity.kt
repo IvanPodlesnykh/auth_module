@@ -44,46 +44,51 @@ class MainActivity : AppCompatActivity() {
                 .build()
                 .create(AuthApi::class.java)
 
-        binding.authButton.setOnClickListener {
+        binding.tokenButton.setOnClickListener {
             binding.progressBar.isVisible = true
 
-            authService.getCookies().enqueue(object : Callback<CookiesResponse>{
+            authService.getCookies().enqueue(object : Callback<MyResponse>{
                 override fun onResponse(
-                    call: Call<CookiesResponse>,
-                    response: Response<CookiesResponse>
+                    call: Call<MyResponse>,
+                    response: Response<MyResponse>
                 ) {
-                    val cookiesResponse = response.body()?.cookies?: ""
+                    val cookiesResponse = response.headers()["Set-Cookie"]
 
-                    val cookiesArr = cookiesResponse.split(";")
+                    val cookiesArr = cookiesResponse!!.split(";")
 
                     token = cookiesArr[0].substringAfterLast("=")
 
-                    binding.textView.text = token
+                    binding.tokenText.text = token
                     sharedPrefHandler.saveString("token", token)
                     binding.progressBar.isVisible = false
                 }
 
-                override fun onFailure(call: Call<CookiesResponse>, t: Throwable) {
-                    binding.textView.text = t.toString()
+                override fun onFailure(call: Call<MyResponse>, t: Throwable) {
+                    binding.tokenText.text = t.toString()
                     binding.progressBar.isVisible = false
                 }
 
             })
+        }
 
-//            authService.authenticate(login, password, cookies, token).enqueue(object : Callback<CookiesResponse> {
-//                override fun onResponse(
-//                    call: Call<CookiesResponse>,
-//                    response: Response<CookiesResponse>
-//                ) {
-//                    println(response.headers())
-//                }
-//
-//                override fun onFailure(call: Call<CookiesResponse>, t: Throwable) {
-//                    binding.textView.text = t.toString()
-//                    binding.progressBar.isVisible = false
-//                }
-//
-//            })
+        binding.authButton.setOnClickListener {
+            binding.progressBar.isVisible = true
+
+            authService.authenticate(login, password, cookies, token).enqueue(object : Callback<MyResponse> {
+                override fun onResponse(
+                    call: Call<MyResponse>,
+                    response: Response<MyResponse>
+                ) {
+                    binding.authText.text = response.headers()["Set-Cookie"]
+                    binding.progressBar.isVisible = false
+                }
+
+                override fun onFailure(call: Call<MyResponse>, t: Throwable) {
+                    binding.authText.text = t.toString()
+                    binding.progressBar.isVisible = false
+                }
+
+            })
         }
 
     }
@@ -94,7 +99,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun getInterceptedHttpClient(): OkHttpClient {
         return OkHttpClient.Builder()
-            .addInterceptor(MyInterceptor(token = sharedPrefHandler.getString("token")?: ""))
+            .addInterceptor(MyInterceptor())
             .build()
     }
 
@@ -145,7 +150,8 @@ class MainActivity : AppCompatActivity() {
 
             val builder = OkHttpClient.Builder()
             builder.sslSocketFactory(sslSocketFactory, trustManager)
-            builder.hostnameVerifier(HostnameVerifier { _, _ -> true })
+            builder.hostnameVerifier{ _, _ -> true}
+            builder.addInterceptor(MyInterceptor())
             builder.build()
         } catch (e: Exception) {
             throw RuntimeException(e)

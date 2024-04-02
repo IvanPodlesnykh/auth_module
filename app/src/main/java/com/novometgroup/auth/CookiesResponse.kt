@@ -2,4 +2,4 @@ package com.novometgroup.auth
 
 import com.google.gson.annotations.SerializedName
 
-data class CookiesResponse(@SerializedName("Set-Cookie") val cookies: String)
+data class MyResponse(val response: String)
