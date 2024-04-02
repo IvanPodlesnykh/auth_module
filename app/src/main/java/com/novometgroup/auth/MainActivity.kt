@@ -33,7 +33,9 @@ class MainActivity : AppCompatActivity() {
         sharedPrefHandler = SharedPrefHandler(getSharedPreferences("sharedPref", MODE_PRIVATE))
 
         val login = ""
-        val password = ""
+        val password = "12345678"
+        var token = ""
+        var cookies = ""
 
         val authService = Retrofit.Builder()
                 .baseUrl(AUTH_BASE_URL)
@@ -44,23 +46,44 @@ class MainActivity : AppCompatActivity() {
 
         binding.authButton.setOnClickListener {
             binding.progressBar.isVisible = true
-            authService.authenticate(login, password).enqueue(object : Callback<AuthResponse> {
+
+            authService.getCookies().enqueue(object : Callback<CookiesResponse>{
                 override fun onResponse(
-                    call: Call<AuthResponse>,
-                    response: Response<AuthResponse>
+                    call: Call<CookiesResponse>,
+                    response: Response<CookiesResponse>
                 ) {
-                    val token = response.body()?.token?: ""
+                    val cookiesResponse = response.body()?.cookies?: ""
+
+                    val cookiesArr = cookiesResponse.split(";")
+
+                    token = cookiesArr[0].substringAfterLast("=")
+
                     binding.textView.text = token
                     sharedPrefHandler.saveString("token", token)
                     binding.progressBar.isVisible = false
                 }
 
-                override fun onFailure(call: Call<AuthResponse>, t: Throwable) {
+                override fun onFailure(call: Call<CookiesResponse>, t: Throwable) {
                     binding.textView.text = t.toString()
                     binding.progressBar.isVisible = false
                 }
 
             })
+
+//            authService.authenticate(login, password, cookies, token).enqueue(object : Callback<CookiesResponse> {
+//                override fun onResponse(
+//                    call: Call<CookiesResponse>,
+//                    response: Response<CookiesResponse>
+//                ) {
+//                    println(response.headers())
+//                }
+//
+//                override fun onFailure(call: Call<CookiesResponse>, t: Throwable) {
+//                    binding.textView.text = t.toString()
+//                    binding.progressBar.isVisible = false
+//                }
+//
+//            })
         }
 
     }
