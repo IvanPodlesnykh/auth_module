@@ -10,6 +10,8 @@ class MyInterceptor: Interceptor {
         val request = original.newBuilder()
             .header("Accept", "application/json")
             .header("Uses-Agent", "Android application")
+//            .header("Cookie", "")
+//            .header("X-Xsrf-Token", "")
             .method(original.method(), original.body())
             .build()
         val response = chain.proceed(request)
