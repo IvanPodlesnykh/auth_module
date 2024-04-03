@@ -29,8 +29,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toTopOf="@id/tokenButton"
-        app:layout_constraintStart_toStartOf="@id/tokenButton"
-        app:layout_constraintEnd_toEndOf="@id/tokenButton"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="50dp"
         android:text="output_token"/>
 
     <Button
@@ -46,9 +47,10 @@
         android:id="@+id/authText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toTopOf="@id/authButton"
-        app:layout_constraintStart_toStartOf="@id/authButton"
-        app:layout_constraintEnd_toEndOf="@id/authButton"
+        app:layout_constraintTop_toBottomOf="@id/progressBar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="25dp"
         android:text="auth_text"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

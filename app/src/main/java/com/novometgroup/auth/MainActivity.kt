@@ -57,7 +57,7 @@ class MainActivity : AppCompatActivity() {
 
                     token = cookiesArr[0].substringAfterLast("=")
 
-                    binding.tokenText.text = token
+                    binding.tokenText.text = "token: $token"
                     sharedPrefHandler.saveString("token", token)
                     binding.progressBar.isVisible = false
                 }
@@ -78,7 +78,14 @@ class MainActivity : AppCompatActivity() {
                     call: Call<MyResponse>,
                     response: Response<MyResponse>
                 ) {
-                    binding.authText.text = response.headers()["Set-Cookie"]
+                    val headerMapList = response.headers().toMultimap()
+                    val cookiesResponse = headerMapList["Set-Cookie"]
+                    val tokenResponse = cookiesResponse?.get(0)?: ""
+                    val sessionResponse = cookiesResponse?.get(1)?: ""
+                    token = tokenResponse
+                    sharedPrefHandler.saveString("token", tokenResponse)
+                    sharedPrefHandler.saveString("session", sessionResponse)
+                    binding.authText.text = "token: $tokenResponse\nsesson: $sessionResponse"
                     binding.progressBar.isVisible = false
                 }
 
@@ -93,7 +100,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
-        const val AUTH_BASE_URL = "https://10.0.2.2:8000/"
+        const val AUTH_BASE_URL = "http://10.0.2.2:8000/"
     }
 
     private fun getInterceptedHttpClient(): OkHttpClient {
@@ -150,7 +157,7 @@ class MainActivity : AppCompatActivity() {
             val builder = OkHttpClient.Builder()
             builder.sslSocketFactory(sslSocketFactory, trustManager)
             builder.hostnameVerifier{ _, _ -> true}
-            builder.addInterceptor(MyInterceptor())
+//            builder.addInterceptor(MyInterceptor())
             builder.build()
         } catch (e: Exception) {
             throw RuntimeException(e)
