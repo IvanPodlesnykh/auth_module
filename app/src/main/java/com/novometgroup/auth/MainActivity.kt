@@ -31,7 +31,7 @@ class MainActivity : AppCompatActivity() {
 
         sharedPrefHandler = SharedPrefHandler(getSharedPreferences("sharedPref", MODE_PRIVATE))
 
-        val login = ""
+        val login = "Ivan.Zolotarev@novometgroup.com"
         val password = "12345678"
         var token = ""
         var cookies = ""
