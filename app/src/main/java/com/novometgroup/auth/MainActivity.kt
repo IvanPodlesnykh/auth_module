@@ -51,9 +51,9 @@ class MainActivity : AppCompatActivity() {
                     call: Call<MyResponse>,
                     response: Response<MyResponse>
                 ) {
-                    val cookiesResponse = response.headers()["Set-Cookie"]
+                    cookies = response.headers()["Set-Cookie"] ?: ""
 
-                    val cookiesArr = cookiesResponse!!.split(";")
+                    val cookiesArr = cookies.split(";")
 
                     token = cookiesArr[0].substringAfterLast("=")
 
@@ -93,7 +93,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
-        const val AUTH_BASE_URL = "https://some.adress/"
+        const val AUTH_BASE_URL = "https://10.0.2.2:8000/"
     }
 
     private fun getInterceptedHttpClient(): OkHttpClient {
