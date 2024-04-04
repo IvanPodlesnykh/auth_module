@@ -53,4 +53,21 @@
         android:layout_marginTop="25dp"
         android:text="auth_text"/>
 
+    <Button
+        android:id="@+id/getInfo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:text="Get info"/>
+    <TextView
+        android:id="@+id/infoText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toTopOf="@id/getInfo"
+        app:layout_constraintStart_toStartOf="@id/getInfo"
+        app:layout_constraintEnd_toEndOf="@id/getInfo"
+        android:text="info"/>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

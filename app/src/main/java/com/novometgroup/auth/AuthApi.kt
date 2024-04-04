@@ -9,11 +9,11 @@ import retrofit2.http.Part
 
 interface AuthApi {
 
-    @GET("token_path/")
+    @GET("sanctum/csrf-cookie")
     fun getCookies(): Call<MyResponse>
 
     @Multipart
-    @POST("auth_path/")
+    @POST("login")
     fun authenticate(@Part("email") login: String,
                      @Part("password") password: String,
                      @Header("Cookie") cookie: String,

@@ -3,6 +3,8 @@ package com.novometgroup.auth
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
+import com.novometgroup.androidiscool.MotorDetails
+import com.novometgroup.androidiscool.getApiService
 import com.novometgroup.auth.databinding.ActivityMainBinding
 import okhttp3.OkHttpClient
 import retrofit2.Call
@@ -13,6 +15,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.security.KeyStore
 import java.security.SecureRandom
 import java.security.cert.CertificateException
+import java.util.concurrent.Callable
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
@@ -24,17 +27,18 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var sharedPrefHandler: SharedPrefHandler
 
+    val login = "Ivan.Zolotarev@novometgroup.com"
+    val password = "12345678"
+    var token = ""
+    var cookies = ""
+    var session = ""
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         sharedPrefHandler = SharedPrefHandler(getSharedPreferences("sharedPref", MODE_PRIVATE))
-
-        val login = "Ivan.Zolotarev@novometgroup.com"
-        val password = "12345678"
-        var token = ""
-        var cookies = ""
 
         val authService = Retrofit.Builder()
                 .baseUrl(AUTH_BASE_URL)
@@ -51,14 +55,23 @@ class MainActivity : AppCompatActivity() {
                     call: Call<MyResponse>,
                     response: Response<MyResponse>
                 ) {
-                    cookies = response.headers()["Set-Cookie"] ?: ""
+                    cookies = ""
+                    val headerMapList = response.headers().toMultimap()
+                    val cookiesResponse = headerMapList.get("set-cookie")
+                    for (item in cookiesResponse!!.iterator()) {
+                        if (item.contains("XSRF-TOKEN")) {
+                            token = item.substringAfter("XSRF-TOKEN=").substringBefore(";")
+                            sharedPrefHandler.saveString("token", token)
+                            cookies += item.substringBefore(";")
+                        }
+                        if (item.contains("difa_php_session")) {
+                            session = item.substringAfter("difa_php_session=").substringBefore(";")
+                            sharedPrefHandler.saveString("session", session)
+                            cookies += item.substringBefore(";")
+                        }
+                    }
+                    binding.tokenText.text = "token: $token\nsesson: $session"
 
-                    val cookiesArr = cookies.split(";")
-
-                    token = cookiesArr[0].substringAfterLast("=")
-
-                    binding.tokenText.text = "token: $token"
-                    sharedPrefHandler.saveString("token", token)
                     binding.progressBar.isVisible = false
                 }
 
@@ -78,14 +91,23 @@ class MainActivity : AppCompatActivity() {
                     call: Call<MyResponse>,
                     response: Response<MyResponse>
                 ) {
+                    cookies = ""
                     val headerMapList = response.headers().toMultimap()
-                    val cookiesResponse = headerMapList["Set-Cookie"]
-                    val tokenResponse = cookiesResponse?.get(0)?: ""
-                    val sessionResponse = cookiesResponse?.get(1)?: ""
-                    token = tokenResponse
-                    sharedPrefHandler.saveString("token", tokenResponse)
-                    sharedPrefHandler.saveString("session", sessionResponse)
-                    binding.authText.text = "token: $tokenResponse\nsesson: $sessionResponse"
+                    val cookiesResponse = headerMapList.get("set-cookie")
+                    for (item in cookiesResponse!!.iterator()) {
+                        if (item.contains("XSRF-TOKEN")) {
+                            cookies += item.substringBefore(";")
+                            token = item.substringAfter("XSRF-TOKEN=").substringBefore(";")
+                            sharedPrefHandler.saveString("token", token)
+                        }
+                        if (item.contains("difa_php_session")) {
+                            cookies += item.substringBefore(";")
+                            session = item.substringAfter("difa_php_session=").substringBefore(";")
+                            sharedPrefHandler.saveString("session", session)
+                        }
+                    }
+
+                    binding.authText.text = "token: $token\nsesion: $session"
                     binding.progressBar.isVisible = false
                 }
 
@@ -93,14 +115,38 @@ class MainActivity : AppCompatActivity() {
                     binding.authText.text = t.toString()
                     binding.progressBar.isVisible = false
                 }
-
             })
         }
 
+        binding.getInfo.setOnClickListener {
+            binding.progressBar.isVisible = true
+            getApiService().getMotorDetails(cookies, token).enqueue(
+                object : Callback<ArrayList<MotorDetails>> {
+                    override fun onResponse(
+                        call: Call<ArrayList<MotorDetails>>,
+                        response: Response<ArrayList<MotorDetails>>
+                    ) {
+                        val motorDetails = response.body()
+                        println("CODE ${response.code()}")
+                        if (motorDetails != null) {
+                            binding.infoText.text =
+                                "${motorDetails[2].code} : ${motorDetails[2].name}"
+                        }
+                        binding.progressBar.isVisible = false
+                    }
+
+                    override fun onFailure(call: Call<ArrayList<MotorDetails>>, t: Throwable) {
+                        binding.infoText.text = t.toString()
+                        binding.progressBar.isVisible = false
+                    }
+                }
+            )
+        }
     }
 
     companion object {
-        const val AUTH_BASE_URL = "http://10.0.2.2:8000/"
+        //const val AUTH_BASE_URL = "http://10.0.2.2:8000/"
+        const val AUTH_BASE_URL = "http://172.16.30.36:8000/"
     }
 
     private fun getInterceptedHttpClient(): OkHttpClient {
@@ -157,6 +203,7 @@ class MainActivity : AppCompatActivity() {
             val builder = OkHttpClient.Builder()
             builder.sslSocketFactory(sslSocketFactory, trustManager)
             builder.hostnameVerifier{ _, _ -> true}
+//            builder.cookieJar(MyCookieJar())
 //            builder.addInterceptor(MyInterceptor())
             builder.build()
         } catch (e: Exception) {
