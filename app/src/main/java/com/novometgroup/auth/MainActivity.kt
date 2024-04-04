@@ -15,7 +15,6 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.security.KeyStore
 import java.security.SecureRandom
 import java.security.cert.CertificateException
-import java.util.concurrent.Callable
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
@@ -32,6 +31,7 @@ class MainActivity : AppCompatActivity() {
     var token = ""
     var cookies = ""
     var session = ""
+    var xsrfToken = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,7 +62,8 @@ class MainActivity : AppCompatActivity() {
                         if (item.contains("XSRF-TOKEN")) {
                             token = item.substringAfter("XSRF-TOKEN=").substringBefore(";")
                             sharedPrefHandler.saveString("token", token)
-                            cookies += item.substringBefore(";")
+                            cookies += item.substringBefore(";") + " "
+                            xsrfToken = item.substringAfter("XSRF-TOKEN=").substringBefore("%3D") + "="
                         }
                         if (item.contains("difa_php_session")) {
                             session = item.substringAfter("difa_php_session=").substringBefore(";")
@@ -86,19 +87,22 @@ class MainActivity : AppCompatActivity() {
         binding.authButton.setOnClickListener {
             binding.progressBar.isVisible = true
 
-            authService.authenticate(login, password, cookies, token).enqueue(object : Callback<MyResponse> {
+            authService.authenticate(login, password, cookies, xsrfToken).enqueue(object : Callback<MyResponse> {
                 override fun onResponse(
                     call: Call<MyResponse>,
                     response: Response<MyResponse>
                 ) {
+                    println("AUTH: ${response.code()}")
+                    println("AUTH: $cookies\n$xsrfToken")
                     cookies = ""
                     val headerMapList = response.headers().toMultimap()
                     val cookiesResponse = headerMapList.get("set-cookie")
                     for (item in cookiesResponse!!.iterator()) {
                         if (item.contains("XSRF-TOKEN")) {
-                            cookies += item.substringBefore(";")
+                            cookies += item.substringBefore(";") + " "
                             token = item.substringAfter("XSRF-TOKEN=").substringBefore(";")
                             sharedPrefHandler.saveString("token", token)
+                            xsrfToken = item.substringAfter("XSRF-TOKEN=").substringBefore("%3D") + "="
                         }
                         if (item.contains("difa_php_session")) {
                             cookies += item.substringBefore(";")
@@ -149,13 +153,6 @@ class MainActivity : AppCompatActivity() {
         const val AUTH_BASE_URL = "http://172.16.30.36:8000/"
     }
 
-    private fun getInterceptedHttpClient(): OkHttpClient {
-        return OkHttpClient.Builder()
-            .addInterceptor(MyInterceptor())
-            .build()
-    }
-
-
     // Custom OkHttp client to bypass ssl certificate checks
     private fun getUnsafeOkHttpClient(): OkHttpClient? {
         return try {
@@ -203,8 +200,6 @@ class MainActivity : AppCompatActivity() {
             val builder = OkHttpClient.Builder()
             builder.sslSocketFactory(sslSocketFactory, trustManager)
             builder.hostnameVerifier{ _, _ -> true}
-//            builder.cookieJar(MyCookieJar())
-//            builder.addInterceptor(MyInterceptor())
             builder.build()
         } catch (e: Exception) {
             throw RuntimeException(e)
