@@ -14,7 +14,7 @@ interface AuthApi {
 
     @Multipart
     @POST("login")
-    fun authenticate(@Part("email") login: String,
+    fun authenticate(@Part("email") email: String,
                      @Part("password") password: String,
                      @Header("Cookie") cookie: String,
                      @Header("X-Xsrf-Token") token: String): Call<MyResponse>

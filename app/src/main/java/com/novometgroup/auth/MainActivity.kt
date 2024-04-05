@@ -4,9 +4,9 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import com.novometgroup.androidiscool.MotorDetails
-import com.novometgroup.androidiscool.getApiService
 import com.novometgroup.auth.databinding.ActivityMainBinding
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -92,8 +92,6 @@ class MainActivity : AppCompatActivity() {
                     call: Call<MyResponse>,
                     response: Response<MyResponse>
                 ) {
-                    println("AUTH: ${response.code()}")
-                    println("AUTH: $cookies\n$xsrfToken")
                     cookies = ""
                     val headerMapList = response.headers().toMultimap()
                     val cookiesResponse = headerMapList.get("set-cookie")
@@ -131,7 +129,6 @@ class MainActivity : AppCompatActivity() {
                         response: Response<ArrayList<MotorDetails>>
                     ) {
                         val motorDetails = response.body()
-                        println("CODE ${response.code()}")
                         if (motorDetails != null) {
                             binding.infoText.text =
                                 "${motorDetails[2].code} : ${motorDetails[2].name}"
@@ -200,6 +197,7 @@ class MainActivity : AppCompatActivity() {
             val builder = OkHttpClient.Builder()
             builder.sslSocketFactory(sslSocketFactory, trustManager)
             builder.hostnameVerifier{ _, _ -> true}
+            builder.addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
             builder.build()
         } catch (e: Exception) {
             throw RuntimeException(e)

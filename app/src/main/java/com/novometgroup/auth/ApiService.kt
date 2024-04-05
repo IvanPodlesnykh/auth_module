@@ -1,10 +1,10 @@
-package com.novometgroup.androidiscool
+package com.novometgroup.auth
 
+import com.novometgroup.androidiscool.MotorDetails
 import okhttp3.OkHttpClient
 import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.converter.scalars.ScalarsConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Header
 import java.security.KeyStore
@@ -16,7 +16,6 @@ import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 
-//const val baseUrl = "https://raw.githubusercontent.com/"
 //const val baseUrl = "http://10.0.2.2:80/"
 const val baseUrl = "http://172.16.30.36:8000/"
 
