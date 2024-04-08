@@ -1,16 +1,19 @@
 package com.novometgroup.auth
 
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import com.novometgroup.androidiscool.MotorDetails
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.converter.scalars.ScalarsConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Header
 import java.security.KeyStore
 import java.security.SecureRandom
 import java.security.cert.CertificateException
-import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
@@ -22,14 +25,18 @@ const val baseUrl = "http://172.16.30.36:8000/"
 interface ApiService {
     @GET("/api/motor/details/index")
     fun getMotorDetails(@Header("Cookie") cookie: String,
-                        @Header("X-Xsrf-Token") token: String) : Call<ArrayList<MotorDetails>>
+                        @Header("X-Xsrf-Token") token: String,
+                        @Header("Referer") referer: String = "http://172.16.30.36:8000") : Call<ArrayList<MotorDetails>>
 }
 
 fun getApiService(): ApiService {
     return Retrofit.Builder()
         .baseUrl(baseUrl)
         .client(getUnsafeOkHttpClient())
-        .addConverterFactory(GsonConverterFactory.create())
+        .addConverterFactory(ScalarsConverterFactory.create())
+        .addConverterFactory(GsonConverterFactory.create(GsonBuilder()
+            .setLenient()
+            .create()))
         .build().create(ApiService::class.java)
 }
 
@@ -79,7 +86,8 @@ private fun getUnsafeOkHttpClient(): OkHttpClient? {
 
         val builder = OkHttpClient.Builder()
         builder.sslSocketFactory(sslSocketFactory, trustManager)
-        builder.hostnameVerifier(HostnameVerifier { _, _ -> true })
+        builder.hostnameVerifier{ _, _ -> true }
+        builder.addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
         builder.build()
     } catch (e: Exception) {
         throw RuntimeException(e)

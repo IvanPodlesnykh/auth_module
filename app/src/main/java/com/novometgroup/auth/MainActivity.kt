@@ -3,6 +3,7 @@ package com.novometgroup.auth
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
+import com.google.gson.GsonBuilder
 import com.novometgroup.androidiscool.MotorDetails
 import com.novometgroup.auth.databinding.ActivityMainBinding
 import okhttp3.OkHttpClient
@@ -12,6 +13,7 @@ import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.converter.scalars.ScalarsConverterFactory
 import java.security.KeyStore
 import java.security.SecureRandom
 import java.security.cert.CertificateException
@@ -20,13 +22,14 @@ import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 
+
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
 
     private lateinit var sharedPrefHandler: SharedPrefHandler
 
-    val login = "Ivan.Zolotarev@novometgroup.com"
+    val login = "test@test.com"
     val password = "12345678"
     var token = ""
     var cookies = ""
@@ -40,9 +43,14 @@ class MainActivity : AppCompatActivity() {
 
         sharedPrefHandler = SharedPrefHandler(getSharedPreferences("sharedPref", MODE_PRIVATE))
 
+        val gson = GsonBuilder()
+            .setLenient()
+            .create()
+
         val authService = Retrofit.Builder()
                 .baseUrl(AUTH_BASE_URL)
-                .addConverterFactory(GsonConverterFactory.create())
+                .addConverterFactory(ScalarsConverterFactory.create())
+                .addConverterFactory(GsonConverterFactory.create(gson))
                 .client(getUnsafeOkHttpClient())
                 .build()
                 .create(AuthApi::class.java)
@@ -62,7 +70,7 @@ class MainActivity : AppCompatActivity() {
                         if (item.contains("XSRF-TOKEN")) {
                             token = item.substringAfter("XSRF-TOKEN=").substringBefore(";")
                             sharedPrefHandler.saveString("token", token)
-                            cookies += item.substringBefore(";") + " "
+                            cookies += item.substringBefore(";") + "; "
                             xsrfToken = item.substringAfter("XSRF-TOKEN=").substringBefore("%3D") + "="
                         }
                         if (item.contains("difa_php_session")) {
@@ -87,17 +95,17 @@ class MainActivity : AppCompatActivity() {
         binding.authButton.setOnClickListener {
             binding.progressBar.isVisible = true
 
-            authService.authenticate(login, password, cookies, xsrfToken).enqueue(object : Callback<MyResponse> {
+            authService.authenticate(RegistrationBody(login, password), cookies, xsrfToken).enqueue(object : Callback<String> {
                 override fun onResponse(
-                    call: Call<MyResponse>,
-                    response: Response<MyResponse>
+                    call: Call<String>,
+                    response: Response<String>
                 ) {
                     cookies = ""
                     val headerMapList = response.headers().toMultimap()
                     val cookiesResponse = headerMapList.get("set-cookie")
                     for (item in cookiesResponse!!.iterator()) {
                         if (item.contains("XSRF-TOKEN")) {
-                            cookies += item.substringBefore(";") + " "
+                            cookies += item.substringBefore(";") + "; "
                             token = item.substringAfter("XSRF-TOKEN=").substringBefore(";")
                             sharedPrefHandler.saveString("token", token)
                             xsrfToken = item.substringAfter("XSRF-TOKEN=").substringBefore("%3D") + "="
@@ -113,7 +121,7 @@ class MainActivity : AppCompatActivity() {
                     binding.progressBar.isVisible = false
                 }
 
-                override fun onFailure(call: Call<MyResponse>, t: Throwable) {
+                override fun onFailure(call: Call<String>, t: Throwable) {
                     binding.authText.text = t.toString()
                     binding.progressBar.isVisible = false
                 }
@@ -122,7 +130,7 @@ class MainActivity : AppCompatActivity() {
 
         binding.getInfo.setOnClickListener {
             binding.progressBar.isVisible = true
-            getApiService().getMotorDetails(cookies, token).enqueue(
+            getApiService().getMotorDetails(cookies, xsrfToken).enqueue(
                 object : Callback<ArrayList<MotorDetails>> {
                     override fun onResponse(
                         call: Call<ArrayList<MotorDetails>>,
