@@ -8,11 +8,12 @@ import retrofit2.http.POST
 
 interface AuthApi {
 
-    @GET("sanctum/csrf-cookie")
-    fun getCookies(): Call<MyResponse>
+    @POST("api/sanctum/token")
+    fun getToken(@Body registrationBody: RegistrationBody): Call<String>
 
-    @POST("login")
-    fun authenticate(@Body registrationBody: RegistrationBody,
-                     @Header("Cookie") cookie: String,
-                     @Header("X-Xsrf-Token") token: String): Call<String>
+//
+//    @POST("login")
+//    fun authenticate(@Body registrationBody: RegistrationBody,
+//                     @Header("Cookie") cookie: String,
+//                     @Header("X-Xsrf-Token") token: String): Call<String>
 }

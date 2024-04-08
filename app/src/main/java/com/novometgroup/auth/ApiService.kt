@@ -24,8 +24,7 @@ const val baseUrl = "http://172.16.30.36:8000/"
 
 interface ApiService {
     @GET("/api/motor/details/index")
-    fun getMotorDetails(@Header("Cookie") cookie: String,
-                        @Header("X-Xsrf-Token") token: String,
+    fun getMotorDetails(@Header("Authorization") bearer: String,
                         @Header("Referer") referer: String = "http://172.16.30.36:8000") : Call<ArrayList<MotorDetails>>
 }
 

@@ -31,10 +31,8 @@ class MainActivity : AppCompatActivity() {
 
     val login = "test@test.com"
     val password = "12345678"
-    var token = ""
-    var cookies = ""
-    var session = ""
-    var xsrfToken = ""
+    val deviceName = "VirtualDevice2"
+    var token: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,6 +40,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         sharedPrefHandler = SharedPrefHandler(getSharedPreferences("sharedPref", MODE_PRIVATE))
+        token = sharedPrefHandler.getString("token")?: ""
 
         val gson = GsonBuilder()
             .setLenient()
@@ -56,81 +55,40 @@ class MainActivity : AppCompatActivity() {
                 .create(AuthApi::class.java)
 
         binding.tokenButton.setOnClickListener {
-            binding.progressBar.isVisible = true
+            binding.tokenText.text = "token: $token"
+            if (token == "") {
+                binding.progressBar.isVisible = true
+                authService.getToken(RegistrationBody(login, password, deviceName)).enqueue(object : Callback<String>{
+                    override fun onResponse(
+                        call: Call<String>,
+                        response: Response<String>
+                    ) {
+                        token = response.body().toString()
 
-            authService.getCookies().enqueue(object : Callback<MyResponse>{
-                override fun onResponse(
-                    call: Call<MyResponse>,
-                    response: Response<MyResponse>
-                ) {
-                    cookies = ""
-                    val headerMapList = response.headers().toMultimap()
-                    val cookiesResponse = headerMapList.get("set-cookie")
-                    for (item in cookiesResponse!!.iterator()) {
-                        if (item.contains("XSRF-TOKEN")) {
-                            token = item.substringAfter("XSRF-TOKEN=").substringBefore(";")
-                            sharedPrefHandler.saveString("token", token)
-                            cookies += item.substringBefore(";") + "; "
-                            xsrfToken = item.substringAfter("XSRF-TOKEN=").substringBefore("%3D") + "="
-                        }
-                        if (item.contains("difa_php_session")) {
-                            session = item.substringAfter("difa_php_session=").substringBefore(";")
-                            sharedPrefHandler.saveString("session", session)
-                            cookies += item.substringBefore(";")
-                        }
-                    }
-                    binding.tokenText.text = "token: $token\nsesson: $session"
+                        sharedPrefHandler.saveString("token", token!!)
 
-                    binding.progressBar.isVisible = false
-                }
+                        binding.tokenText.text = "token: $token"
 
-                override fun onFailure(call: Call<MyResponse>, t: Throwable) {
-                    binding.tokenText.text = t.toString()
-                    binding.progressBar.isVisible = false
-                }
-
-            })
-        }
-
-        binding.authButton.setOnClickListener {
-            binding.progressBar.isVisible = true
-
-            authService.authenticate(RegistrationBody(login, password), cookies, xsrfToken).enqueue(object : Callback<String> {
-                override fun onResponse(
-                    call: Call<String>,
-                    response: Response<String>
-                ) {
-                    cookies = ""
-                    val headerMapList = response.headers().toMultimap()
-                    val cookiesResponse = headerMapList.get("set-cookie")
-                    for (item in cookiesResponse!!.iterator()) {
-                        if (item.contains("XSRF-TOKEN")) {
-                            cookies += item.substringBefore(";") + "; "
-                            token = item.substringAfter("XSRF-TOKEN=").substringBefore(";")
-                            sharedPrefHandler.saveString("token", token)
-                            xsrfToken = item.substringAfter("XSRF-TOKEN=").substringBefore("%3D") + "="
-                        }
-                        if (item.contains("difa_php_session")) {
-                            cookies += item.substringBefore(";")
-                            session = item.substringAfter("difa_php_session=").substringBefore(";")
-                            sharedPrefHandler.saveString("session", session)
-                        }
+                        binding.progressBar.isVisible = false
                     }
 
-                    binding.authText.text = "token: $token\nsesion: $session"
-                    binding.progressBar.isVisible = false
-                }
-
-                override fun onFailure(call: Call<String>, t: Throwable) {
-                    binding.authText.text = t.toString()
-                    binding.progressBar.isVisible = false
-                }
-            })
+                    override fun onFailure(call: Call<String>, t: Throwable) {
+                        binding.tokenText.text = t.toString()
+                        binding.progressBar.isVisible = false
+                    }
+                })
+            }
         }
 
         binding.getInfo.setOnClickListener {
+
+            if (token == "") {
+                binding.infoText.text = "No token. Please get token first."
+                return@setOnClickListener
+            }
+
             binding.progressBar.isVisible = true
-            getApiService().getMotorDetails(cookies, xsrfToken).enqueue(
+            getApiService().getMotorDetails("Bearer " + sharedPrefHandler.getString("token")!!).enqueue(
                 object : Callback<ArrayList<MotorDetails>> {
                     override fun onResponse(
                         call: Call<ArrayList<MotorDetails>>,
@@ -154,7 +112,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
-        //const val AUTH_BASE_URL = "http://10.0.2.2:8000/"
         const val AUTH_BASE_URL = "http://172.16.30.36:8000/"
     }
 
