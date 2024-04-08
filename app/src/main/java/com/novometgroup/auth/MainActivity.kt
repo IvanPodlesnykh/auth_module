@@ -32,7 +32,6 @@ class MainActivity : AppCompatActivity() {
     val login = "test@test.com"
     val password = "12345678"
     val deviceName = "VirtualDevice2"
-    var token: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,7 +39,6 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         sharedPrefHandler = SharedPrefHandler(getSharedPreferences("sharedPref", MODE_PRIVATE))
-        token = sharedPrefHandler.getString("token")?: ""
 
         val gson = GsonBuilder()
             .setLenient()
@@ -55,15 +53,15 @@ class MainActivity : AppCompatActivity() {
                 .create(AuthApi::class.java)
 
         binding.tokenButton.setOnClickListener {
-            binding.tokenText.text = "token: $token"
-            if (token == "") {
+            binding.tokenText.text = "token: ${sharedPrefHandler.getString("token")?: ""}"
+            if (sharedPrefHandler.getString("token") == "") {
                 binding.progressBar.isVisible = true
                 authService.getToken(RegistrationBody(login, password, deviceName)).enqueue(object : Callback<String>{
                     override fun onResponse(
                         call: Call<String>,
                         response: Response<String>
                     ) {
-                        token = response.body().toString()
+                        val token = response.body().toString()
 
                         sharedPrefHandler.saveString("token", token!!)
 
@@ -82,7 +80,7 @@ class MainActivity : AppCompatActivity() {
 
         binding.getInfo.setOnClickListener {
 
-            if (token == "") {
+            if (sharedPrefHandler.getString("token") == "") {
                 binding.infoText.text = "No token. Please get token first."
                 return@setOnClickListener
             }
@@ -106,6 +104,36 @@ class MainActivity : AppCompatActivity() {
                         binding.infoText.text = t.toString()
                         binding.progressBar.isVisible = false
                     }
+                }
+            )
+        }
+
+        binding.tokenRevokeButton.setOnClickListener {
+
+
+            if (sharedPrefHandler.getString("token") == "") {
+                binding.infoText.text = "No token. Please get token first."
+                return@setOnClickListener
+            }
+
+            binding.progressBar.isVisible = true
+            authService.deleteToken("Bearer " + sharedPrefHandler.getString("token")!!).enqueue(
+                object : Callback<Int> {
+                    override fun onResponse(call: Call<Int>, response: Response<Int>) {
+                        if(response.body() == 1) {
+                            binding.infoText.text = "Token successfully deleted!"
+                            sharedPrefHandler.deleteString("token")
+                        }
+
+                        binding.progressBar.isVisible = false
+                    }
+
+                    override fun onFailure(call: Call<Int>, t: Throwable) {
+                        binding.infoText.text = t.toString()
+
+                        binding.progressBar.isVisible = false
+                    }
+
                 }
             )
         }

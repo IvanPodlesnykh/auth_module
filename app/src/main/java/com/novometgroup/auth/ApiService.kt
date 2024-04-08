@@ -1,6 +1,5 @@
 package com.novometgroup.auth
 
-import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.novometgroup.androidiscool.MotorDetails
 import okhttp3.OkHttpClient
@@ -19,7 +18,6 @@ import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 
-//const val baseUrl = "http://10.0.2.2:80/"
 const val baseUrl = "http://172.16.30.36:8000/"
 
 interface ApiService {

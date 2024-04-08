@@ -14,4 +14,10 @@ class SharedPrefHandler (
    fun getString(key: String): String? {
        return sharedPreferences.getString(key, "")
    }
+
+    fun deleteString(key: String) {
+        sharedPreferences.edit()
+            .putString(key, "")
+            .apply()
+    }
 }
